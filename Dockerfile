@@ -14,4 +14,4 @@ RUN pip install -r requirements.txt
 EXPOSE 5000
 
 #run the application when container launch
-CMD [ "python", "app.py" ]
+CMD [ "python", "web_app.py" ]
