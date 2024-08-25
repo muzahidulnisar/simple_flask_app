@@ -1,0 +1,95 @@
+pipeline {
+    agent any
+    environment{
+        GIT_REPO = "https://github.com/muzahidulnisar/simple_flask_app.git"
+        DOCKERHUB_CRED = "muzahidulnisar-dockerhub"
+        DOCKERHUB_USERNAME = "muzahidulnisar"
+        DOCKERHUB_REPO = "assignment-jenkins"
+        EC2_HOST = '13.200.215.221'
+        EC2_USER = 'ubuntu'
+        SSH_CRED_ID = 'test_poc_key'
+    }
+
+    stages {
+        stage('Clone git repo') {
+            steps {
+                git branch: "main", url: "${env.GIT_REPO}"
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    sh 'pip3 install -r requirements.txt'
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                script {
+                    sh 'pytest'
+                }
+            }
+        }
+        stage('Build docker image') {
+            steps {
+                script{
+                    docker.build("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}")
+                }
+            }
+        }
+        stage('Push docker image') {
+            steps {
+                script{
+                    docker.withRegistry("", "${env.DOCKERHUB_CRED}") {
+                        docker.image("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}").push()
+                    }
+                }
+            }
+        }
+        // stage('Deploy using docker image') {
+        //     steps {
+        //         script {
+        //             // create docker image
+        //             docker.build("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}")
+
+        //             // Push docker image to dockerhub repo
+        //             docker.withRegistry("", "${env.DOCKERHUB_CRED}") {
+        //                 docker.image("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}").push()
+        //             }
+
+        //             // run docker container from created image
+        //             sh """
+        //                 docker run -d --name web_flask_app -p 5000:5000 ${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}
+        //             """
+        //         }
+        //     }
+        // }
+        stage('Deploy to EC2 using docker image in container'){
+            steps {
+                sshagent(credentials: ["${env.SSH_CRED_ID}"]){
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${env.EC2_USER}@${env.EC2_host} \\
+                    'docker pull ${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID} && \\
+                     docker run -d --name web_flask_app -p 5000:5000 ${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}'
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success {
+            emailext ( 
+                subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER}", 
+                body: "The jenkins job ${env.JOB_NAME} with build ${env.BUILD_NUMBER} is successful.", 
+                to: 'muzahidalig@gmail.com', 
+                from: 'jenkins@example.com')
+        }
+        failure {
+            emailext ( 
+                subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER}", 
+                body: "The jenkins job ${env.JOB_NAME} with build ${env.BUILD_NUMBER} is successful.", 
+                to: 'muzahidalig@gmail.com', 
+                from: 'jenkins@example.com')
+        }
+    }
+}
