@@ -21,9 +21,9 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          sudo mkdir -p /home/ubuntu/git-CICD/
-          sudo chown -R ${{ secrets.EC2_USERNAME }} /home/ubuntu/git-CICD/
-          sudo chmod -R 755 /home/ubuntu/git-CICD/
+          sudo mkdir -p /home/ubuntu/git-CICD-staging/
+          sudo chown -R ${{ secrets.EC2_USERNAME }} /home/ubuntu/git-CICD-staging/
+          sudo chmod -R 755 /home/ubuntu/git-CICD-staging/
 
     - name: Copy code to EC2
       uses: appleboy/scp-action@v0.1.4
@@ -33,7 +33,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         source: ./
-        target: /home/ubuntu/git-CICD/
+        target: /home/ubuntu/git-CICD-staging/
 
     - name: Install Dependencies
       uses: appleboy/ssh-action@v1.0.0
@@ -43,7 +43,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          sudo pip3 install -r /home/ubuntu/git-CICD/requirements.txt
+          sudo pip3 install -r /home/ubuntu/git-CICD-staging/requirements.txt
 
     - name: Test code
       uses: appleboy/ssh-action@v1.0.0
@@ -53,7 +53,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          cd /home/ubuntu/git-CICD/
+          cd /home/ubuntu/git-CICD-staging/
           pytest
 
     - name: Deploy code using Docker image
@@ -64,6 +64,8 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          cd /home/ubuntu/git-CICD/
+          cd /home/ubuntu/git-CICD-staging/
           docker build -t simple-web-muzahid:latest .
-          docker run -d --name web_flask_app -p 5000:5000 simple-web-muzahid:latest
+          docker stop web_flask_app
+          docker rm web_flask_app
+          docker run -d --name web_flask_app-staging -p 5000:5000 simple-web-muzahid:latest
