@@ -66,4 +66,6 @@ jobs:
         script: |
           cd /home/ubuntu/git-CICD/
           docker build -t simple-web-muzahid:latest .
+          docker stop web_flask_app
+          docker rm web_flask_app
           docker run -d --name web_flask_app -p 5000:5000 simple-web-muzahid:latest
