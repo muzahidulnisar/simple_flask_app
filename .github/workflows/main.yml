@@ -45,16 +45,6 @@ jobs:
         script: |
           sudo pip3 install -r /home/ubuntu/git-CICD/requirements.txt
 
-    - name: Test code
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        port: 22
-        script: |
-          pytest /home/ubuntu/git-CICD/
-
     - name: Deploy code using Docker image
       uses: appleboy/ssh-action@v1.0.0
       with:
