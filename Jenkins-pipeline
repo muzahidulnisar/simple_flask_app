@@ -46,24 +46,6 @@ pipeline {
                 }
             }
         }
-        // stage('Deploy using docker image') {
-        //     steps {
-        //         script {
-        //             // create docker image
-        //             docker.build("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}")
-
-        //             // Push docker image to dockerhub repo
-        //             docker.withRegistry("", "${env.DOCKERHUB_CRED}") {
-        //                 docker.image("${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}").push()
-        //             }
-
-        //             // run docker container from created image
-        //             sh """
-        //                 docker run -d --name web_flask_app -p 5000:5000 ${env.DOCKERHUB_USERNAME}/${env.DOCKERHUB_REPO}:${env.BUILD_ID}
-        //             """
-        //         }
-        //     }
-        // }
         stage('Deploy to EC2 using docker image in container'){
             steps {
                 sshagent(credentials: ["${env.SSH_CRED_ID}"]){
