@@ -7,7 +7,7 @@ WORKDIR /app
 #copy the content of current directory to location /usr/src/app
 COPY . .
 
-#install flask package
+#install required package
 RUN pip install -r requirements.txt
 
 #expose the web port
