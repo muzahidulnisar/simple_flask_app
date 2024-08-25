@@ -45,6 +45,17 @@ jobs:
         script: |
           sudo pip3 install -r /home/ubuntu/git-CICD/requirements.txt
 
+    - name: Test the code
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        working-directory: /home/ubuntu/git-CICD/
+        script: |
+          pytest
+
     - name: Deploy code using Docker image
       uses: appleboy/ssh-action@v1.0.0
       with:
@@ -52,6 +63,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
+        working-directory: /home/ubuntu/git-CICD/
         script: |
           docker build -t simple-web-muzahid:latest .
           docker run -d --name web_flask_app -p 5000:5000 simple-web-muzahid:latest
